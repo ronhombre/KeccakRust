@@ -1,20 +1,69 @@
-# KeccakRust
+# KeccakRust (0.0.1)
 
 A Rust port of [KeccakKotlin](https://github.com/ronhombre/KeccakKotlin) utilizing
 [neo-rust-gradle-plugin](https://github.com/ronhombre/neo-rust-gradle-plugin). This is a proof of concept project for
 building Rust Gradle projects using my plugin.
 
-In the future, this will be integrated into **KeccakKotlin** as a native backend, and the Kotlin code will remain untouched
-as a backup for platforms I can't build a binary for. (_This seems illogical given KMP is supposed to provide a common
-language for multiple platforms. However, the main goal here is to prove Rust can be built with Gradle using my plugin
-and to learn Rust myself._)
+> [!WARNING] Note Nov 1st, 2025: If the Gradle plugin is not yet available in Gradle Plugin Portal by the time you're
+> reading this, you need to build **neo-rust-gradle-plugin** and publish it locally using
+> `./gradlew publishPluginMavenPublicationToMavenLocal`. At the moment, I'm still waiting for Gradle to approve my
+> plugin.)
 
-Currently, this project is under work in progress. Only a "Hello World" has been made. Run it with `./gradlew runTest`.
+Run the test executable with `./gradlew runTestRelease`.
 
-(Note Nov 1st, 2025: If the Gradle plugin is not yet available in Gradle Plugin Portal by the time you're reading this,
-you need to build **neo-rust-gradle-plugin** and publish it locally using
-`./gradlew publishPluginMavenPublicationToMavenLocal`. At the moment, I'm still waiting for Gradle to approve my
-plugin.)
+```rust
+use keccakrust::{KeccakParameter, *};
+
+fn main() {
+    let mut sha3_224 = SHA3_224::new_input_stream();
+    sha3_224.write_bytes(&[0u8; 0]); //Write nothing
+    let mut sha3_224_output = sha3_224.close();
+    let hash_224 = sha3_224_output.next_bytes((KeccakParameter::SHA3_224.min_length / 8) as usize);
+    println!("{}", hex::encode(hash_224));
+
+    let mut sha3_256 = SHA3_256::new_input_stream();
+    sha3_256.write_bytes(&[0u8; 0]); //Write nothing
+    let mut sha3_256_output = sha3_256.close();
+    let hash_256 = sha3_256_output.next_bytes((KeccakParameter::SHA3_256.min_length / 8) as usize);
+    println!("{}", hex::encode(hash_256));
+
+    let mut sha3_384 = SHA3_384::new_input_stream();
+    sha3_384.write_bytes(&[0u8; 0]); //Write nothing
+    let mut sha3_384_output = sha3_384.close();
+    let hash_384 = sha3_384_output.next_bytes((KeccakParameter::SHA3_384.min_length / 8) as usize);
+    println!("{}", hex::encode(hash_384));
+
+    let mut sha3_512 = SHA3_512::new_input_stream();
+    sha3_512.write_bytes(&[0u8; 0]); //Write nothing
+    let mut sha3_512_output = sha3_512.close();
+    let hash_512 = sha3_512_output.next_bytes((KeccakParameter::SHA3_512.min_length / 8) as usize);
+    println!("{}", hex::encode(hash_512));
+
+    let mut rawshake_128 = RAWSHAKE_128::new_input_stream();
+    rawshake_128.write_bytes(&[0u8; 0]); //Write nothing
+    let mut rawshake_128_output = rawshake_128.close();
+    let hash_rawshake_128 = rawshake_128_output.next_bytes((256 / 8) as usize);
+    println!("{}", hex::encode(hash_rawshake_128));
+
+    let mut rawshake_256 = RAWSHAKE_256::new_input_stream();
+    rawshake_256.write_bytes(&[0u8; 0]); //Write nothing
+    let mut rawshake_256_output = rawshake_256.close();
+    let hash_rawshake_256 = rawshake_256_output.next_bytes((512 / 8) as usize);
+    println!("{}", hex::encode(hash_rawshake_256));
+
+    let mut shake_128 = SHAKE_128::new_input_stream();
+    shake_128.write_bytes(&[0u8; 0]); //Write nothing
+    let mut shake_128_output = shake_128.close();
+    let hash_shake_128 = shake_128_output.next_bytes((256 / 8) as usize);
+    println!("{}", hex::encode(hash_shake_128));
+
+    let mut shake_256 = SHAKE_256::new_input_stream();
+    shake_256.write_bytes(&[0u8; 0]); //Write nothing
+    let mut shake_256_output = shake_256.close();
+    let hash_shake_256 = shake_256_output.next_bytes((512 / 8) as usize);
+    println!("{}", hex::encode(hash_shake_256));
+}
+```
 
 This is a copy of the generated `Cargo.toml` by my plugin given the current `build.gradle.kts`.
 ```toml
@@ -22,16 +71,47 @@ This is a copy of the generated `Cargo.toml` by my plugin given the current `bui
 # MODIFY YOUR build.gradle.kts/build.gradle FILE INSTEAD!
 # CHANGES HERE WILL BE LOST!!!
 [package]
-name = "keccak-rust"
+name = "keccakrust"
 version = "0.0.1"
 authors = ["Ron Lauren Hombre <ronlauren@hombre.asia>"]
 edition = "2024"
 
+[dependencies]
+hex = { version = "0.4.3" }
+
 [lib]
 path = "../src/main/rust/lib.rs"
-crate-type = ["dylib"]
+crate-type = ["dylib", "rlib"]
 
 [[bin]]
 name = "test"
 path = "../src/main/rust/main.rs"
+
+```
+
+### Sidenote
+
+In the future, this will be integrated into **KeccakKotlin** as a native backend, and the Kotlin code will remain untouched
+as a backup for platforms I can't build a binary for. (_This seems illogical given KMP is supposed to provide a common
+language for multiple platforms. However, the main goal here is to prove Rust can be built with Gradle using my plugin
+and to learn Rust myself._)
+
+### License
+
+```
+Copyright 2025 Ron Lauren Hombre
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+       https://www.apache.org/licenses/LICENSE-2.0
+       
+       and included as LICENSE.txt in this Project.
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 ```
