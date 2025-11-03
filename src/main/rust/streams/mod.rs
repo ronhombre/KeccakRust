@@ -15,7 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-use std::cmp::min;
+use core::cmp::min;
+use crate::constants::OUTPUT_STREAM_LIMIT_ERROR;
 use crate::KeccakParameter;
 
 pub struct HashInputStream {
@@ -137,10 +138,7 @@ impl HashOutputStream {
         return self.is_squeezable() || self.total_output_length < self.max_output_length;
     }
 
-    fn try_squeeze(&mut self) {
-        if !self.has_next() {
-            panic!("This output stream has been limited to {} bytes of output.", self.max_output_length);
-        }
+    fn try_squeeze(&mut self)  {
         if self.used < self.parameter.byterate() as usize {
             return;
         }
@@ -152,9 +150,14 @@ impl HashOutputStream {
         self.internal_buffer.copy_from_slice(&crate::keccakmath::state_array_to_bytes(self.internal_state));
 
         self.used = 0;
+
+        return;
     }
 
-    fn get_as_many_bytes(&mut self, destination: &mut [u8], offset: usize) -> usize {
+    fn get_as_many_bytes(&mut self, destination: &mut [u8], offset: usize) -> Option<usize> {
+        if !self.has_next() {
+            return None;
+        }
         self.try_squeeze();
 
         let as_much = min(self.parameter.byterate() as usize - self.used, destination.len() - offset);
@@ -163,30 +166,34 @@ impl HashOutputStream {
         self.used = self.used + as_much;
         self.total_output_length = self.total_output_length + as_much;
 
-        return offset + as_much;
+        return Some(offset + as_much);
     }
 
-    pub fn next_byte(&mut self) -> u8 {
+    pub fn next_byte(&mut self) -> Option<u8> {
+        if !self.has_next() {
+            return None;
+        }
         self.try_squeeze();
 
         self.used = self.used + 1;
         self.total_output_length = self.total_output_length + 1;
 
-        return self.internal_buffer[self.used - 1]
+        return Some(self.internal_buffer[self.used - 1]);
     }
 
-    pub fn next_bytes(&mut self, length: usize) -> Vec<u8> {
-        if !self.is_squeezable() && self.total_output_length + length > self.max_output_length {
-            panic!("This output stream has been limited to {} bytes of output.", self.max_output_length);
+    pub fn next_bytes(&mut self, destination_array: &mut [u8]) -> Option<&str> {
+        if !self.is_squeezable() && self.total_output_length + destination_array.len() > self.max_output_length {
+            return Some(OUTPUT_STREAM_LIMIT_ERROR);
         }
-        let mut destination_array = vec![0u8; length];
-
         let mut offset = 0usize;
-        while offset < length {
-            offset = self.get_as_many_bytes(&mut destination_array, offset);
+        while offset < destination_array.len() {
+            match self.get_as_many_bytes(destination_array, offset) {
+                Some(new_offset) => offset = new_offset,
+                _ => return Some(OUTPUT_STREAM_LIMIT_ERROR)
+            }
         }
 
-        return destination_array;
+        return None;
     }
 }
 

@@ -1,18 +1,22 @@
 import asia.hombre.neorust.option.BuildProfile
+import asia.hombre.neorust.task.CargoBuild
 
 plugins {
     id("asia.hombre.neorust") version "0.4.0"
 }
 
 group = "asia.hombre.keccak"
-version = "0.0.1"
+version = "0.0.2"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    crate("hex:0.4.3")
+    crate("hex:0.4.3") {
+        optional = true
+    }
+    devCrate("hex:0.4.3")
 }
 
 rust {
@@ -28,13 +32,33 @@ rust {
         }
     }
 
+    features {
+        feature("default", listOf("standalone"))
+        feature("standalone")
+        feature("executable", listOf("dep:hex"))
+    }
+
+    profiles {
+        dev.put("panic", "abort")
+        release.put("panic", "abort")
+    }
+
     binaries {
         register("test") {
             //This prints the stacktrace during panic
-            environment.put("RUST_BACKTRACE", "1")
+            environment.put("RUST_BACKTRACE", "full")
+            arguments.addAll(listOf("--features", "executable"))
         }
         register("test") {
             buildProfile = BuildProfile.RELEASE
         }
+    }
+}
+
+//Configure it afterEvaluate since that's when the tasks are added
+afterEvaluate {
+    tasks.findByName("buildTest")!!.apply { this as CargoBuild
+        features.set("executable")
+        noDefaultFeatures = true
     }
 }

@@ -15,14 +15,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-use std::mem;
+use core::mem;
 use crate::constants::ROUND;
 
-pub fn pad10n1(bytes: &mut [u8], last_index: usize, padding: u8, padding_length: u8) {
-    assert!(last_index < (bytes.len()), "Index out of bounds. Index: {}", last_index);
+pub fn pad10n1(bytes: &mut [u8], last_index: usize, padding: u8, padding_length: u8) -> bool {
+    if last_index >= bytes.len() {
+        return false;
+    }
 
     bytes[last_index] = padding | (1 << padding_length);
     bytes[bytes.len() - 1] = bytes[bytes.len() - 1] | 0x80;
+
+    return true;
 }
 
 pub fn permute(state: &mut [u64; 25]) {
