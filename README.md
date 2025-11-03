@@ -10,7 +10,7 @@ building Rust Gradle projects using my plugin.
 > `./gradlew publishPluginMavenPublicationToMavenLocal`. At the moment, I'm still waiting for Gradle to approve my
 > plugin.)
 
-Run the test executable with `./gradlew runTestRelease`.
+Run the test executable with `./gradlew runTest` or `./gradlew test`.
 
 ```rust
 use keccakrust::*;
