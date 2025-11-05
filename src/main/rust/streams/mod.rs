@@ -37,6 +37,7 @@ impl HashInputStream {
             incomplete_state: [0u64; 25]
         };
     }
+    
     fn try_permute(&mut self) {
         if self.input_pos < self.parameter.byterate() as usize {
             return;
@@ -44,10 +45,16 @@ impl HashInputStream {
 
         let mut input_state = crate::keccakmath::bytes_to_state_array(self.input_buffer);
 
-        crate::keccakmath::transpose_state(&mut input_state);
-        for i in 0..25usize {
-            self.incomplete_state[i] ^= input_state[i];
+        for y in 0..5usize {
+            for x in 0..5usize {
+                let i = 5usize * x + y;
+                let transposed_i = 5usize * y + x;
+
+                self.incomplete_state[i] ^= input_state[transposed_i];
+            }
         }
+        
+        input_state.fill(0);
 
         crate::keccakmath::permute(&mut self.incomplete_state);
 
@@ -99,15 +106,13 @@ impl HashInputStream {
 
         self.try_permute();
 
-        crate::keccakmath::transpose_state(&mut self.incomplete_state);
-
         self.input_buffer.fill(0);
 
         return HashOutputStream {
             parameter: self.parameter,
             max_output_length: self.max_output_length,
             internal_state: self.incomplete_state,
-            internal_buffer: crate::keccakmath::state_array_to_bytes(self.incomplete_state),
+            internal_buffer: crate::keccakmath::state_to_output_copy(self.incomplete_state),
             total_output_length: 0usize,
             used: 0usize
         };
@@ -135,7 +140,7 @@ impl HashOutputStream {
     }
 
     pub fn has_next(&self) -> bool {
-        return self.is_squeezable() || self.total_output_length < self.max_output_length;
+        return self.is_squeezable() && self.max_output_length == 0 || self.total_output_length < self.max_output_length;
     }
 
     fn try_squeeze(&mut self)  {
@@ -143,11 +148,13 @@ impl HashOutputStream {
             return;
         }
 
-        //TODO: Fix the need to transpose
-        crate::keccakmath::transpose_state(&mut self.internal_state);
         crate::keccakmath::permute(&mut self.internal_state);
-        crate::keccakmath::transpose_state(&mut self.internal_state);
-        self.internal_buffer.copy_from_slice(&crate::keccakmath::state_array_to_bytes(self.internal_state));
+        
+        let mut output_buffer = crate::keccakmath::state_to_output_copy(self.internal_state);
+        
+        self.internal_buffer = output_buffer; //This does a memory copy in Rust
+
+        output_buffer.fill(0); //Zero-fill the buffer since we don't need it
 
         self.used = 0;
 

@@ -123,3 +123,13 @@ pub fn transpose_state(state: &mut [u64; 25]) {
         state[4], state[9], state[14], state[19], state[24],
     ];
 }
+
+pub fn state_to_output_copy(mut state: [u64; 25]) -> [u8; 200] {
+    transpose_state(&mut state);
+    
+    let result = state_array_to_bytes(state);
+    
+    state.fill(0);
+    
+    return result;
+}
