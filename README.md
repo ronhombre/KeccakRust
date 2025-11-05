@@ -1,14 +1,12 @@
-# KeccakRust (0.0.2)
+# KeccakRust (0.0.3)
 
 A Rust port of [KeccakKotlin](https://github.com/ronhombre/KeccakKotlin) utilizing
 [neo-rust-gradle-plugin](https://github.com/ronhombre/neo-rust-gradle-plugin). This is a proof of concept project for
 building Rust Gradle projects using my plugin.
 
-> [!WARNING]
-> Note Nov 1st, 2025: If the Gradle plugin is not yet available in Gradle Plugin Portal by the time you're reading this,
-> you need to build **neo-rust-gradle-plugin** and publish it locally using
-> `./gradlew publishPluginMavenPublicationToMavenLocal`. At the moment, I'm still waiting for Gradle to approve my
-> plugin.)
+> [!NOTE]
+> All code in this project is directly ported from [KeccakKotlin](https://github.com/ronhombre/KeccakKotlin). Many
+> design modifications have been made to accommodate the new environment that is Rust, so it is not a 1:1 port.
 
 Run the test executable with `./gradlew runTest` or `./gradlew test`.
 
@@ -97,7 +95,7 @@ This is a copy of the generated `Cargo.toml` by my plugin given the current `bui
 # CHANGES HERE WILL BE LOST!!!
 [package]
 name = "keccakrust"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Ron Lauren Hombre <ronlauren@hombre.asia>"]
 edition = "2024"
 
