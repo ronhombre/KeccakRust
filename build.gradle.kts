@@ -2,7 +2,7 @@ import asia.hombre.neorust.option.BuildProfile
 import asia.hombre.neorust.task.CargoBuild
 
 plugins {
-    id("asia.hombre.neorust") version "0.4.0"
+    id("asia.hombre.neorust") version "0.5.0"
 }
 
 group = "asia.hombre.keccak"
