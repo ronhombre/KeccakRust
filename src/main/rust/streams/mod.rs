@@ -17,24 +17,26 @@
  */
 use core::cmp::min;
 use crate::constants::OUTPUT_STREAM_LIMIT_ERROR;
-use crate::KeccakParameter;
+use crate::{keccakmath, KeccakParameter};
 
 pub struct HashInputStream {
     pub parameter: KeccakParameter,
     max_output_length: usize,
     input_buffer: [u8; 200],
     input_pos: usize,
-    incomplete_state: [u64; 25]
+    incomplete_state: [u64; 25],
+    add_right_encode_at_close: bool //KMAC specific property
 }
 
 impl HashInputStream {
-    pub fn new(parameter: KeccakParameter, max_output_length: usize) -> Self {
+    pub fn new(parameter: &KeccakParameter, max_output_length: usize, add_right_encode_at_close: bool) -> Self {
         return HashInputStream {
-            parameter: parameter,
+            parameter: parameter.clone(),
             max_output_length: max_output_length,
             input_buffer: [0u8; 200],
             input_pos: 0,
-            incomplete_state: [0u64; 25]
+            incomplete_state: [0u64; 25],
+            add_right_encode_at_close: add_right_encode_at_close
         };
     }
     
@@ -94,22 +96,30 @@ impl HashInputStream {
     pub fn write_bytes(&mut self, bytes: &[u8]) {
         self.on_absorb(&bytes, 0, bytes.len());
     }
+    
+    pub(crate) fn force_permute(&mut self) {
+        self.input_pos = self.parameter.byterate() as usize;
+        self.try_permute();
+    }
 
     pub fn close(mut self) -> HashOutputStream {
+        if self.add_right_encode_at_close {
+            let mut buffer = [0u8; 9];
+            let size = keccakmath::right_encode(&mut buffer, self.max_output_length as u64 * 8);
+            self.write_bytes(&buffer[0..size]);
+        }
+        
         crate::keccakmath::pad10n1(
             &mut self.input_buffer[0..self.parameter.byterate() as usize],
             self.input_pos,
             self.parameter.padding_bytes[0],
             self.parameter.padding_bitcount
         );
-        self.input_pos = self.parameter.byterate() as usize;
 
-        self.try_permute();
-
-        self.input_buffer.fill(0);
+        self.force_permute();
 
         return HashOutputStream {
-            parameter: self.parameter,
+            parameter: self.parameter.clone(),
             max_output_length: self.max_output_length,
             internal_state: self.incomplete_state,
             internal_buffer: crate::keccakmath::state_to_output_copy(self.incomplete_state),
@@ -134,7 +144,9 @@ impl HashOutputStream {
             crate::KeccakParameter::SHA3_224 |
             crate::KeccakParameter::SHA3_256 |
             crate::KeccakParameter::SHA3_384 |
-            crate::KeccakParameter::SHA3_512 => false,
+            crate::KeccakParameter::SHA3_512 |
+            crate::KeccakParameter::KMAC_128 |
+            crate::KeccakParameter::KMAC_256 => false,
             _ => true
         }
     }
@@ -204,3 +216,18 @@ impl HashOutputStream {
     }
 }
 
+//Automatically zero fill once out of scope
+impl Drop for HashInputStream {
+    fn drop(&mut self) {
+        self.incomplete_state.fill(0);
+        self.input_buffer.fill(0);
+    }
+}
+
+//Automatically zero fill once out of scope
+impl Drop for HashOutputStream {
+    fn drop(&mut self) {
+        self.internal_state.fill(0);
+        self.internal_buffer.fill(0);
+    }
+}

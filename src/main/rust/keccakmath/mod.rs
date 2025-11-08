@@ -16,13 +16,11 @@
  * limitations under the License.
  */
 use core::mem;
+use core::cmp::max;
 use crate::constants::ROUND;
 
+//This function always assumes that last_index < bytes.len() is always TRUE
 pub fn pad10n1(bytes: &mut [u8], last_index: usize, padding: u8, padding_length: u8) -> bool {
-    if last_index >= bytes.len() {
-        return false;
-    }
-
     bytes[last_index] = padding | (1 << padding_length);
     bytes[bytes.len() - 1] = bytes[bytes.len() - 1] | 0x80;
 
@@ -132,4 +130,39 @@ pub fn state_to_output_copy(mut state: [u64; 25]) -> [u8; 200] {
     state.fill(0);
     
     return result;
+}
+
+// SP 800-185
+
+pub fn compute_for_n_given_x(x: u64) -> u8 {
+    ((64u8 - (x >> 1).leading_zeros() as u8) >> 3) + 1
+}
+
+//This function always assumes that the destination buffer is at least 8 bytes in size
+pub fn encode_to_bytes(destination: &mut [u8], number: u64) -> usize {
+    let used_bytes = (64 - number.leading_zeros() as usize + 7) >> 3;
+
+    destination[0..used_bytes].copy_from_slice(&number.to_be_bytes()[(8 - used_bytes)..8]);
+
+    return used_bytes;
+}
+
+//This function always assumes that the destination buffer is 9 bytes in size
+pub fn left_encode(destination: &mut [u8], x: u64) -> usize {
+    let n = compute_for_n_given_x(x);
+    let offset = max(encode_to_bytes(&mut destination[1..9], x), 1);
+
+    destination[0] = n;
+
+    return offset + 1;
+}
+
+//This function always assumes that the destination buffer is 9 bytes in size
+pub fn right_encode(destination: &mut [u8], x: u64) -> usize {
+    let n = compute_for_n_given_x(x);
+    let offset = max(encode_to_bytes(&mut destination[0..8], x), 1);
+
+    destination[offset] = n;
+
+    return offset + 1;
 }
