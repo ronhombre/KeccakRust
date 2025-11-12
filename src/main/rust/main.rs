@@ -118,5 +118,5 @@ fn main() {
 
 #[cfg(not(feature = "executable"))]
 fn main() {
-    
+
 }

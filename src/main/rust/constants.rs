@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/// Unsigned Version of the Keccak Round Constants taken from an early version of KeccakKotlin.
 pub const ROUND: [u64; 24] = [
     0x0000000000000001, 0x0000000000008082, 0x800000000000808A, 0x8000000080008000,
     0x000000000000808B, 0x0000000080000001, 0x8000000080008081, 0x8000000000008009,
@@ -24,6 +25,8 @@ pub const ROUND: [u64; 24] = [
     0x8000000080008081, 0x8000000000008080, 0x0000000080000001, 0x8000000080008008
 ];
 
+/// A generic error when trying to take more bytes from the `HashOutputStream` than permitted.
 pub const OUTPUT_STREAM_LIMIT_ERROR: &str = "This output stream has been limited to the value of `output_length` bytes.";
 
+/// K, M, A, C in bytes form.
 pub const KMAC_ENCODED: [u8; 4] = [b'K', b'M', b'A', b'C'];

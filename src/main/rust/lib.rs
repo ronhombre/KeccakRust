@@ -20,7 +20,10 @@
 #[cfg(all(not(debug_assertions), not(feature = "executable")))]
 use core::panic::PanicInfo;
 use crate::constants::KMAC_ENCODED;
-use crate::streams::{HashInputStream};
+
+//Expose streams to allow usage in `Option<T>` for example
+pub use crate::streams::HashInputStream;
+pub use crate::streams::HashOutputStream;
 
 mod keccakmath;
 mod constants;
@@ -37,6 +40,7 @@ pub struct KeccakParameter {
 }
 
 impl KeccakParameter {
+    /// Keccak\[448\](M||01, 224)
     pub const SHA3_224: KeccakParameter = KeccakParameter {
         name: "SHA3-224",
         min_length: 224,
@@ -45,6 +49,7 @@ impl KeccakParameter {
         padding_bytes: &[0b10],
         padding_bitcount: 2
     };
+    /// Keccak\[512\](M||01, 256)
     pub const SHA3_256: KeccakParameter = KeccakParameter {
         name: "SHA3-256",
         min_length: 256,
@@ -53,6 +58,7 @@ impl KeccakParameter {
         padding_bytes: &[0b10],
         padding_bitcount: 2
     };
+    /// Keccak\[768\](M||01, 384)
     pub const SHA3_384: KeccakParameter = KeccakParameter {
         name: "SHA3-384",
         min_length: 384,
@@ -61,6 +67,7 @@ impl KeccakParameter {
         padding_bytes: &[0b10],
         padding_bitcount: 2
     };
+    /// Keccak\[1024\](M||01, 512)
     pub const SHA3_512: KeccakParameter = KeccakParameter {
         name: "SHA3-512",
         min_length: 512,
@@ -69,6 +76,7 @@ impl KeccakParameter {
         padding_bytes: &[0b10],
         padding_bitcount: 2
     };
+    /// Keccak\[256\](M||11, d)
     pub const RAWSHAKE_128: KeccakParameter = KeccakParameter {
         name: "RawSHAKE-128",
         min_length: 128,
@@ -77,6 +85,7 @@ impl KeccakParameter {
         padding_bytes: &[0b11],
         padding_bitcount: 2
     };
+    /// Keccak\[512\](M||11, d)
     pub const RAWSHAKE_256: KeccakParameter = KeccakParameter {
         name: "RawSHAKE-256",
         min_length: 256,
@@ -85,6 +94,7 @@ impl KeccakParameter {
         padding_bytes: &[0b11],
         padding_bitcount: 2
     };
+    /// Keccak\[256\](M||1111, d) = RawSHAKE128(M||11, d)
     pub const SHAKE_128: KeccakParameter = KeccakParameter {
         name: "SHAKE-128",
         min_length: 128,
@@ -93,6 +103,7 @@ impl KeccakParameter {
         padding_bytes: &[0b1111],
         padding_bitcount: 4
     };
+    /// Keccak\[512\](M||1111, d) = RawSHAKE256(M||11, d)
     pub const SHAKE_256: KeccakParameter = KeccakParameter {
         name: "SHAKE-256",
         min_length: 256,
@@ -101,6 +112,9 @@ impl KeccakParameter {
         padding_bytes: &[0b1111],
         padding_bitcount: 4
     };
+    /// SHAKE128 equivalent if N and S is empty "".
+    ///
+    /// Keccak\[256\](bytepad(encode_string(N)||encode_string(S), 168)||X||00, d) = cSHAKE128(encode_string(N)||encode_string(S), 168)||X||00, d)
     pub const CSHAKE_128: KeccakParameter = KeccakParameter {
         name: "cSHAKE-128",
         min_length: 128,
@@ -109,6 +123,9 @@ impl KeccakParameter {
         padding_bytes: &[0b00],
         padding_bitcount: 2
     };
+    /// SHAKE256 equivalent if N and S is empty "".
+    ///
+    /// Keccak\[512\](bytepad(encode_string(N)||encode_string(S), 136)||X||00, d) = cSHAKE128(encode_string(N)||encode_string(S), 136)||X||00, d)
     pub const CSHAKE_256: KeccakParameter = KeccakParameter {
         name: "cSHAKE-256",
         min_length: 256,
@@ -117,6 +134,9 @@ impl KeccakParameter {
         padding_bytes: &[0b00],
         padding_bitcount: 2
     };
+    /// newX = bytepad(encode_string(K), 136) || X || right_encode(L);
+    /// T = bytepad(encode_string("KMAC") || encode_string(S), 136);
+    /// Keccak\[256\](T || newX || 00, L)
     pub const KMAC_128: KeccakParameter = KeccakParameter {
         name: "KMAC-128",
         min_length: 128,
@@ -125,6 +145,9 @@ impl KeccakParameter {
         padding_bytes: &[0b00],
         padding_bitcount: 2
     };
+    /// newX = bytepad(encode_string(K), 168) || X || right_encode(L);
+    /// T = bytepad(encode_string("KMAC") || encode_string(S), 168);
+    /// Keccak\[512\](T || newX || 00, L)
     pub const KMAC_256: KeccakParameter = KeccakParameter {
         name: "KMAC-256",
         min_length: 256,
@@ -133,6 +156,9 @@ impl KeccakParameter {
         padding_bytes: &[0b00],
         padding_bitcount: 2
     };
+    /// newX = bytepad(encode_string(K), 136) || X || right_encode(0);
+    /// T = bytepad(encode_string("KMAC") || encode_string(S), 136);
+    /// Keccak\[256\](T || newX || 00, L)
     pub const KMACXOF_128: KeccakParameter = KeccakParameter {
         name: "KMACXOF-128",
         min_length: 128,
@@ -141,6 +167,9 @@ impl KeccakParameter {
         padding_bytes: &[0b00],
         padding_bitcount: 2
     };
+    /// newX = bytepad(encode_string(K), 168) || X || right_encode(0);
+    /// T = bytepad(encode_string("KMAC") || encode_string(S), 168);
+    /// Keccak\[512\](T || newX || 00, L)
     pub const KMACXOF_256: KeccakParameter = KeccakParameter {
         name: "KMACXOF-256",
         min_length: 256,
@@ -150,14 +179,15 @@ impl KeccakParameter {
         padding_bitcount: 2
     };
 
+    /// Get byterate from bitrate
     pub fn byterate(&self) -> u8 {
-        return (self.bitrate >> 3).try_into().unwrap();
+        (self.bitrate >> 3).try_into().unwrap()
     }
 }
 
 impl Clone for KeccakParameter {
     fn clone(&self) -> Self {
-        return KeccakParameter {
+        KeccakParameter {
             name: self.name,
             min_length: self.min_length,
             max_length: self.max_length,
@@ -199,81 +229,81 @@ pub struct KMACXOF_256 {}
 //TODO: Implement non-inputstream variants
 impl SHA3_224 {
     pub fn new_input_stream() -> HashInputStream {
-        return HashInputStream::new(
+        HashInputStream::new(
             &KeccakParameter::SHA3_224,
             (KeccakParameter::SHA3_224.min_length / 8) as usize,
             false
-        );
+        )
     }
 }
 
 impl SHA3_256 {
     pub fn new_input_stream() -> HashInputStream {
-        return HashInputStream::new(
+        HashInputStream::new(
             &KeccakParameter::SHA3_256,
             (KeccakParameter::SHA3_256.min_length / 8) as usize,
             false
-        );
+        )
     }
 }
 
 impl SHA3_384 {
     pub fn new_input_stream() -> HashInputStream {
-        return HashInputStream::new(
+        HashInputStream::new(
             &KeccakParameter::SHA3_384,
             (KeccakParameter::SHA3_384.min_length / 8) as usize,
             false
-        );
+        )
     }
 }
 
 impl SHA3_512 {
     pub fn new_input_stream() -> HashInputStream {
-        return HashInputStream::new(
+        HashInputStream::new(
             &KeccakParameter::SHA3_512,
             (KeccakParameter::SHA3_512.min_length / 8) as usize,
             false
-        );
+        )
     }
 }
 
 impl RAWSHAKE_128 {
     pub fn new_input_stream() -> HashInputStream {
-        return HashInputStream::new(
+        HashInputStream::new(
             &KeccakParameter::RAWSHAKE_128,
             0usize,
             false
-        );
+        )
     }
 }
 
 impl RAWSHAKE_256 {
     pub fn new_input_stream() -> HashInputStream {
-        return HashInputStream::new(
+        HashInputStream::new(
             &KeccakParameter::RAWSHAKE_256,
             0usize,
             false
-        );
+        )
     }
 }
 
 impl SHAKE_128 {
     pub fn new_input_stream() -> HashInputStream {
-        return HashInputStream::new(
+        HashInputStream::new(
             &KeccakParameter::SHAKE_128,
             0usize,
             false
-        );
+        )
     }
 }
 
 impl SHAKE_256 {
     pub fn new_input_stream() -> HashInputStream {
-        return HashInputStream::new(
+        HashInputStream::new(
             &KeccakParameter::SHAKE_256,
             0usize,
             false
-        );
+        )
     }
 }
 
@@ -318,7 +348,7 @@ impl CSHAKE_128 {
             write_cshake_pre_padding(&mut stream, &function_name, &customization);
         }
 
-        return stream;
+        stream
     }
 }
 
@@ -339,7 +369,7 @@ impl CSHAKE_256 {
             write_cshake_pre_padding(&mut stream, &function_name, &customization);
         }
 
-        return stream;
+        stream
     }
 }
 
@@ -392,7 +422,7 @@ impl KMAC_128 {
 
         write_kmac_pre_padding(&mut stream, &key, &customization);
 
-        return stream;
+        stream
     }
 }
 
@@ -406,7 +436,7 @@ impl KMAC_256 {
 
         write_kmac_pre_padding(&mut stream, &key, &customization);
 
-        return stream;
+        stream
     }
 }
 
@@ -420,7 +450,7 @@ impl KMACXOF_128 {
 
         write_kmac_pre_padding(&mut stream, &key, &customization);
 
-        return stream;
+        stream
     }
 }
 
@@ -434,7 +464,7 @@ impl KMACXOF_256 {
 
         write_kmac_pre_padding(&mut stream, &key, &customization);
 
-        return stream;
+        stream
     }
 }
 

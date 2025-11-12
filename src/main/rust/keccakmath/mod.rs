@@ -19,14 +19,16 @@ use core::mem;
 use core::cmp::max;
 use crate::constants::ROUND;
 
-//This function always assumes that last_index < bytes.len() is always TRUE
+/// This function always assumes that last_index < bytes.len() is always TRUE
 pub fn pad10n1(bytes: &mut [u8], last_index: usize, padding: u8, padding_length: u8) -> bool {
     bytes[last_index] = padding | (1 << padding_length);
     bytes[bytes.len() - 1] = bytes[bytes.len() - 1] | 0x80;
 
-    return true;
+    true
 }
 
+/// Does 24 rounds of permutation using in-place mutation. This consumes an additional 216 bytes of
+/// memory. Zero-filled after.
 pub fn permute(state: &mut [u64; 25]) {
     let mut c = [0u64; 5];
     let mut d = [0u64; 5];
@@ -104,14 +106,18 @@ pub fn permute(state: &mut [u64; 25]) {
     intermediate_state.fill(0);
 }
 
+/// Directly convert a state array to a byte array
 pub fn state_array_to_bytes(input: [u64; 25]) -> [u8; 200] {
     unsafe { mem::transmute(input) }
 }
 
+/// Directly convert a byte array to a state array
 pub fn bytes_to_state_array(input: [u8; 200]) -> [u64; 25] {
     unsafe { mem::transmute(input) }
 }
 
+/// Transposition is needed since the flat memory layout is in Row-major but we needed Column-major
+/// for the permutation algorithm.
 pub fn transpose_state(state: &mut [u64; 25]) {
     *state = [
         state[0], state[5], state[10], state[15], state[20],
@@ -122,6 +128,7 @@ pub fn transpose_state(state: &mut [u64; 25]) {
     ];
 }
 
+/// Transpose and convert to a byte array/
 pub fn state_to_output_copy(mut state: [u64; 25]) -> [u8; 200] {
     transpose_state(&mut state);
     
@@ -129,40 +136,41 @@ pub fn state_to_output_copy(mut state: [u64; 25]) -> [u8; 200] {
     
     state.fill(0);
     
-    return result;
+    result
 }
 
 // SP 800-185
 
+/// Encodes a u64 value into a u8 value.
 pub fn compute_for_n_given_x(x: u64) -> u8 {
     ((64u8 - (x >> 1).leading_zeros() as u8) >> 3) + 1
 }
 
-//This function always assumes that the destination buffer is at least 8 bytes in size
+/// This function always assumes that the destination buffer is at least 8 bytes in size
 pub fn encode_to_bytes(destination: &mut [u8], number: u64) -> usize {
     let used_bytes = (64 - number.leading_zeros() as usize + 7) >> 3;
 
     destination[0..used_bytes].copy_from_slice(&number.to_be_bytes()[(8 - used_bytes)..8]);
 
-    return used_bytes;
+    used_bytes
 }
 
-//This function always assumes that the destination buffer is 9 bytes in size
+/// This function always assumes that the destination buffer is 9 bytes in size
 pub fn left_encode(destination: &mut [u8], x: u64) -> usize {
     let n = compute_for_n_given_x(x);
     let offset = max(encode_to_bytes(&mut destination[1..9], x), 1);
 
     destination[0] = n;
 
-    return offset + 1;
+    offset + 1
 }
 
-//This function always assumes that the destination buffer is 9 bytes in size
+/// This function always assumes that the destination buffer is 9 bytes in size
 pub fn right_encode(destination: &mut [u8], x: u64) -> usize {
     let n = compute_for_n_given_x(x);
     let offset = max(encode_to_bytes(&mut destination[0..8], x), 1);
 
     destination[offset] = n;
 
-    return offset + 1;
+    offset + 1
 }
