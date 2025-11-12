@@ -186,7 +186,7 @@ impl HashInputStream {
 /// let mut output_stream = SHAKE_128::new_input_stream().close();
 /// let mut results = [0u8; 32];
 ///
-/// output_stream.next_bytes(&results);
+/// output_stream.next_bytes(&mut results);
 ///
 /// //or to get a single byte
 ///
