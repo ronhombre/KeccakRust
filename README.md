@@ -8,6 +8,9 @@ building Rust Gradle projects using my plugin.
 > All code in this project is directly ported from [KeccakKotlin](https://github.com/ronhombre/KeccakKotlin). Many
 > design modifications have been made to accommodate the new environment that is Rust, so it is not a 1:1 port.
 
+> [!WARNING]
+> This crate only supports LITTLE ENDIAN systems at the moment i.e., X86 and ARM (most)
+
 Run the test executable with `./gradlew runTest` or `./gradlew test`.
 
 ## Features
