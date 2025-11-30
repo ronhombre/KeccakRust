@@ -27,15 +27,16 @@ pub fn pad10n1(bytes: &mut [u8], last_index: usize, padding: u8, padding_length:
     true
 }
 
-/// Does 24 rounds of permutation using in-place mutation. This consumes an additional 216 bytes of
+ /// Does 24 rounds of permutation using in-place mutation. This consumes an additional 216 bytes of
 /// memory. Zero-filled after.
+#[allow(clippy::zero_prefixed_literal)]
 pub fn permute(state: &mut [u64; 25]) {
     let mut c = [0u64; 5];
     let mut d = [0u64; 5];
 
     let mut intermediate_state = [0u64; 25];
 
-    for i in 0..24 {
+    for iota in &ROUND {
         c[0] = state[00] ^ state[01] ^ state[02] ^ state[03] ^ state[04];
         c[1] = state[05] ^ state[06] ^ state[07] ^ state[08] ^ state[09];
         c[2] = state[10] ^ state[11] ^ state[12] ^ state[13] ^ state[14];
@@ -74,7 +75,7 @@ pub fn permute(state: &mut [u64; 25]) {
         intermediate_state[23] = (state[19] ^ d[3]).rotate_left(56);
         intermediate_state[24] = (state[09] ^ d[1]).rotate_left(02);
 
-        state[00] = intermediate_state[00] ^ (!intermediate_state[05] & intermediate_state[10]) ^ ROUND[i];
+        state[00] = intermediate_state[00] ^ (!intermediate_state[05] & intermediate_state[10]) ^ iota;
         state[01] = intermediate_state[01] ^ (!intermediate_state[06] & intermediate_state[11]);
         state[02] = intermediate_state[02] ^ (!intermediate_state[07] & intermediate_state[12]);
         state[03] = intermediate_state[03] ^ (!intermediate_state[08] & intermediate_state[13]);
@@ -150,7 +151,7 @@ pub fn compute_for_n_given_x(x: u64) -> u8 {
 pub fn encode_to_bytes(destination: &mut [u8], number: u64) -> usize {
     let used_bytes = (64 - number.leading_zeros() as usize + 7) >> 3;
 
-    destination[0..used_bytes].copy_from_slice(&number.to_be_bytes()[(8 - used_bytes)..8]);
+    destination[..used_bytes].copy_from_slice(&number.to_be_bytes()[(8 - used_bytes)..8]);
 
     used_bytes
 }
@@ -158,7 +159,7 @@ pub fn encode_to_bytes(destination: &mut [u8], number: u64) -> usize {
 /// This function always assumes that the destination buffer is 9 bytes in size
 pub fn left_encode(destination: &mut [u8], x: u64) -> usize {
     let n = compute_for_n_given_x(x);
-    let offset = max(encode_to_bytes(&mut destination[1..9], x), 1);
+    let offset = max(encode_to_bytes(&mut destination[1..], x), 1);
 
     destination[0] = n;
 
@@ -168,7 +169,7 @@ pub fn left_encode(destination: &mut [u8], x: u64) -> usize {
 /// This function always assumes that the destination buffer is 9 bytes in size
 pub fn right_encode(destination: &mut [u8], x: u64) -> usize {
     let n = compute_for_n_given_x(x);
-    let offset = max(encode_to_bytes(&mut destination[0..8], x), 1);
+    let offset = max(encode_to_bytes(&mut destination[..8], x), 1);
 
     destination[offset] = n;
 

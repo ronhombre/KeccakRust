@@ -316,16 +316,18 @@ fn write_cshake_pre_padding(stream: &mut HashInputStream, function_name: &[u8], 
     stream.write_bytes(&encoding_buffer[0..encoded_length]);
 
     //encode_string(N)
+    encoding_buffer.fill(0); //Clear buffer
     encoded_length = keccakmath::left_encode(&mut encoding_buffer, function_name.len() as u64 * 8);
     stream.write_bytes(&encoding_buffer[0..encoded_length]);
 
-    stream.write_bytes(&function_name);
+    stream.write_bytes(function_name);
 
     //encode_string(S)
+    encoding_buffer.fill(0); //Clear buffer
     encoded_length = keccakmath::left_encode(&mut encoding_buffer, customization.len() as u64 * 8);
     stream.write_bytes(&encoding_buffer[0..encoded_length]);
 
-    stream.write_bytes(&customization);
+    stream.write_bytes(customization);
 
     //Pad to a multiple of r
     stream.force_permute(); //Equivalent to padding with zeroes
@@ -345,7 +347,7 @@ impl CSHAKE_128 {
         );
 
         if function_name.len() + customization.len() != 0 {
-            write_cshake_pre_padding(&mut stream, &function_name, &customization);
+            write_cshake_pre_padding(&mut stream, function_name, customization);
         }
 
         stream
@@ -366,7 +368,7 @@ impl CSHAKE_256 {
         );
 
         if function_name.len() + customization.len() != 0 {
-            write_cshake_pre_padding(&mut stream, &function_name, &customization);
+            write_cshake_pre_padding(&mut stream, function_name, customization);
         }
 
         stream
@@ -383,30 +385,34 @@ fn write_kmac_pre_padding(stream: &mut HashInputStream, key: &[u8], customizatio
     stream.write_bytes(&encoding_buffer[0..encoded_length]);
 
     //encode_string("KMAC")
+    encoding_buffer.fill(0); //Clear buffer
     encoded_length = keccakmath::left_encode(&mut encoding_buffer, KMAC_ENCODED.len() as u64 * 8);
     stream.write_bytes(&encoding_buffer[0..encoded_length]);
 
     stream.write_bytes(&KMAC_ENCODED);
 
     //encode_string(S)
+    encoding_buffer.fill(0); //Clear buffer
     encoded_length = keccakmath::left_encode(&mut encoding_buffer, customization.len() as u64 * 8);
     stream.write_bytes(&encoding_buffer[0..encoded_length]);
 
-    stream.write_bytes(&customization);
+    stream.write_bytes(customization);
 
     //Pad to a multiple of r
     stream.force_permute(); //Equivalent to padding with zeroes
 
     //Add newX bytes and padding
     //left_encode(r)
+    encoding_buffer.fill(0); //Clear buffer
     encoded_length = keccakmath::left_encode(&mut encoding_buffer, stream.parameter.byterate() as u64);
     stream.write_bytes(&encoding_buffer[0..encoded_length]);
 
     //encode_string(K)
+    encoding_buffer.fill(0); //Clear buffer
     encoded_length = keccakmath::left_encode(&mut encoding_buffer, key.len() as u64 * 8);
     stream.write_bytes(&encoding_buffer[0..encoded_length]);
 
-    stream.write_bytes(&key);
+    stream.write_bytes(key);
 
     //Pad to a multiple of r
     stream.force_permute(); //Equivalent to padding with zeroes
@@ -420,7 +426,7 @@ impl KMAC_128 {
             true
         );
 
-        write_kmac_pre_padding(&mut stream, &key, &customization);
+        write_kmac_pre_padding(&mut stream, key, customization);
 
         stream
     }
@@ -434,7 +440,7 @@ impl KMAC_256 {
             true
         );
 
-        write_kmac_pre_padding(&mut stream, &key, &customization);
+        write_kmac_pre_padding(&mut stream, key, customization);
 
         stream
     }
@@ -448,7 +454,7 @@ impl KMACXOF_128 {
             true
         );
 
-        write_kmac_pre_padding(&mut stream, &key, &customization);
+        write_kmac_pre_padding(&mut stream, key, customization);
 
         stream
     }
@@ -462,7 +468,7 @@ impl KMACXOF_256 {
             true
         );
 
-        write_kmac_pre_padding(&mut stream, &key, &customization);
+        write_kmac_pre_padding(&mut stream, key, customization);
 
         stream
     }

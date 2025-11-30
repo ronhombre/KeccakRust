@@ -2,11 +2,11 @@ import asia.hombre.neorust.option.BuildProfile
 import asia.hombre.neorust.task.CargoBuild
 
 plugins {
-    id("asia.hombre.neorust") version "0.5.0"
+    id("asia.hombre.neorust") version "0.5.4"
 }
 
 group = "asia.hombre.keccak"
-version = "0.0.5"
+version = "0.0.6"
 
 repositories {
     mavenCentral()
