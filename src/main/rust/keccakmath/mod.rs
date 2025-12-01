@@ -17,6 +17,7 @@
  */
 use core::mem;
 use core::cmp::max;
+use zeroize::Zeroize;
 use crate::constants::ROUND;
 
 /// This function always assumes that last_index < bytes.len() is always TRUE
@@ -102,9 +103,9 @@ pub fn permute(state: &mut [u64; 25]) {
         state[24] = intermediate_state[24] ^ (!intermediate_state[04] & intermediate_state[09]);
     }
 
-    c.fill(0);
-    d.fill(0);
-    intermediate_state.fill(0);
+    c.zeroize();
+    d.zeroize();
+    intermediate_state.zeroize();
 }
 
 /// Directly convert a state array to a byte array
@@ -135,7 +136,7 @@ pub fn state_to_output_copy(mut state: [u64; 25]) -> [u8; 200] {
     
     let result = state_array_to_bytes(state);
     
-    state.fill(0);
+    state.zeroize();
     
     result
 }

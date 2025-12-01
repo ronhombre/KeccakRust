@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 use core::cmp::min;
+use zeroize::Zeroize;
 use crate::constants::OUTPUT_STREAM_LIMIT_ERROR;
 use crate::{keccakmath, KeccakParameter};
 
@@ -88,11 +89,11 @@ impl HashInputStream {
             }
         }
         
-        input_state.fill(0);
+        input_state.zeroize();
 
         keccakmath::permute(&mut self.incomplete_state);
 
-        self.input_buffer[0..self.parameter.byterate() as usize].fill(0);
+        self.input_buffer[0..self.parameter.byterate() as usize].zeroize();
         self.input_pos = 0;
     }
 
@@ -107,8 +108,8 @@ impl HashInputStream {
                 .input_buffer[self.input_pos..(self.input_pos + bytes_to_digest)]
                 .copy_from_slice(&bytes[input_index..(input_index + bytes_to_digest)]);
 
-            self.input_pos = self.input_pos + bytes_to_digest;
-            input_index = input_index + bytes_to_digest;
+            self.input_pos += bytes_to_digest;
+            input_index += bytes_to_digest;
 
             self.try_permute();
         }
@@ -123,16 +124,20 @@ impl HashInputStream {
 
     /// Write a single u8 into the internal state. This advances the state if it reaches the
     /// byterate threshold of the loaded parameter.
-    pub fn write_byte(&mut self, byte: u8) {
+    pub fn write_byte(&mut self, byte: u8) -> &mut Self {
         self.on_absorb_one(&byte);
+        
+        self
     }
 
     /// Copy a u8 array into the internal state (batch by batch) and advances the state repeatedly
     /// until the whole u8 array is consumed.
     ///
     /// This doesn't zero fill the input array.
-    pub fn write_bytes(&mut self, bytes: &[u8]) {
-        self.on_absorb(&bytes, 0, bytes.len());
+    pub fn write_bytes(&mut self, bytes: &[u8]) -> &mut Self {
+        self.on_absorb(bytes, 0, bytes.len());
+        
+        self
     }
 
     /// Force a permutation. This is equivalent to padding with zeroes. Useful for KMAC.
@@ -211,15 +216,15 @@ impl HashOutputStream {
     /// Some Keccak parameters can't be squeezed infinitely. This checks if the loaded parameter
     /// can be squeezed infinitely.
     pub fn is_squeezable(&self) -> bool {
-        match self.parameter {
+        !matches!(
+            self.parameter,
             KeccakParameter::SHA3_224 |
             KeccakParameter::SHA3_256 |
             KeccakParameter::SHA3_384 |
             KeccakParameter::SHA3_512 |
             KeccakParameter::KMAC_128 |
-            KeccakParameter::KMAC_256 => false,
-            _ => true
-        }
+            KeccakParameter::KMAC_256
+        )
     }
 
     /// Returns true if there are more bytes permitted to be outputted.
@@ -238,11 +243,9 @@ impl HashOutputStream {
         
         self.internal_buffer = output_buffer; //This does a memory copy in Rust
 
-        output_buffer.fill(0); //Zero-fill the buffer since we don't need it
+        output_buffer.zeroize(); //Zero-fill the buffer since we don't need it
 
         self.used = 0;
-
-        return;
     }
 
     fn get_as_many_bytes(&mut self, destination: &mut [u8], offset: usize) -> Option<usize> {
@@ -254,8 +257,8 @@ impl HashOutputStream {
         let as_much = min(self.parameter.byterate() as usize - self.used, destination.len() - offset);
 
         destination[offset..(offset + as_much)].copy_from_slice(&self.internal_buffer[self.used..(self.used + as_much)]);
-        self.used = self.used + as_much;
-        self.total_output_length = self.total_output_length + as_much;
+        self.used += as_much;
+        self.total_output_length += as_much;
 
         Some(offset + as_much)
     }
@@ -267,8 +270,8 @@ impl HashOutputStream {
         }
         self.try_squeeze();
 
-        self.used = self.used + 1;
-        self.total_output_length = self.total_output_length + 1;
+        self.used += 1;
+        self.total_output_length += 1;
 
         Some(self.internal_buffer[self.used - 1])
     }
@@ -294,15 +297,15 @@ impl HashOutputStream {
 //Automatically zero fill once out of scope
 impl Drop for HashInputStream {
     fn drop(&mut self) {
-        self.incomplete_state.fill(0);
-        self.input_buffer.fill(0);
+        self.incomplete_state.zeroize();
+        self.input_buffer.zeroize();
     }
 }
 
 //Automatically zero fill once out of scope
 impl Drop for HashOutputStream {
     fn drop(&mut self) {
-        self.internal_state.fill(0);
-        self.internal_buffer.fill(0);
+        self.internal_state.zeroize();
+        self.internal_buffer.zeroize();
     }
 }

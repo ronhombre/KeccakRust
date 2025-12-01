@@ -169,6 +169,7 @@ standalone = []
 executable = ["dep:hex"]
 
 [dependencies]
+zeroize = { version = "1.8.2" }
 hex = { version = "0.4.3", optional = true }
 
 [dev-dependencies]

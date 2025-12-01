@@ -13,6 +13,7 @@ repositories {
 }
 
 dependencies {
+    crate("zeroize:1.8.2")
     crate("hex:0.4.3") {
         optional = true
     }

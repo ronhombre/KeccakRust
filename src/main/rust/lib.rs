@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#![allow(non_camel_case_types)]
 #![cfg_attr(all(not(debug_assertions), not(feature = "executable")), no_std)]
 
 #[cfg(all(not(debug_assertions), not(feature = "executable")))]
@@ -197,113 +198,182 @@ impl Clone for KeccakParameter {
         }
     }
 }
-#[allow(non_camel_case_types)]
 pub struct SHA3_224 {}
-#[allow(non_camel_case_types)]
 pub struct SHA3_256 {}
-#[allow(non_camel_case_types)]
 pub struct SHA3_384 {}
-#[allow(non_camel_case_types)]
 pub struct SHA3_512 {}
-#[allow(non_camel_case_types)]
 pub struct RAWSHAKE_128 {}
-#[allow(non_camel_case_types)]
 pub struct RAWSHAKE_256 {}
-#[allow(non_camel_case_types)]
 pub struct SHAKE_128 {}
-#[allow(non_camel_case_types)]
 pub struct SHAKE_256 {}
-#[allow(non_camel_case_types)]
 pub struct CSHAKE_128 {}
-#[allow(non_camel_case_types)]
 pub struct CSHAKE_256 {}
-#[allow(non_camel_case_types)]
 pub struct KMAC_128 {}
-#[allow(non_camel_case_types)]
 pub struct KMAC_256 {}
-#[allow(non_camel_case_types)]
 pub struct KMACXOF_128 {}
-#[allow(non_camel_case_types)]
 pub struct KMACXOF_256 {}
+
+//Type aliases to make it a tiny bit more readable when using.
+
+type SHA3_224InputStream = HashInputStream;
+type SHA3_256InputStream = HashInputStream;
+type SHA3_384InputStream = HashInputStream;
+type SHA3_512InputStream = HashInputStream;
+type RAWSHAKE_128InputStream = HashInputStream;
+type RAWSHAKE_256InputStream = HashInputStream;
+type SHAKE_128InputStream = HashInputStream;
+type SHAKE_256InputStream = HashInputStream;
+type CSHAKE_128InputStream = HashInputStream;
+type CSHAKE_256InputStream = HashInputStream;
+type KMAC_128InputStream = HashInputStream;
+type KMAC_256InputStream = HashInputStream;
+type KMACXOF_128InputStream = HashInputStream;
+type KMACXOF_256InputStream = HashInputStream;
+
+//There's no point using traits here.
 
 //TODO: Implement non-inputstream variants
 impl SHA3_224 {
-    pub fn new_input_stream() -> HashInputStream {
+    pub fn new_input_stream() -> SHA3_224InputStream {
         HashInputStream::new(
             &KeccakParameter::SHA3_224,
             (KeccakParameter::SHA3_224.min_length / 8) as usize,
             false
         )
     }
+
+    pub fn digest(input: &[u8]) -> HashOutputStream {
+        let mut stream = Self::new_input_stream();
+
+        stream.write_bytes(input);
+
+        stream.close()
+    }
 }
 
 impl SHA3_256 {
-    pub fn new_input_stream() -> HashInputStream {
+    pub fn new_input_stream() -> SHA3_256InputStream {
         HashInputStream::new(
             &KeccakParameter::SHA3_256,
             (KeccakParameter::SHA3_256.min_length / 8) as usize,
             false
         )
     }
+
+    pub fn digest(input: &[u8]) -> HashOutputStream {
+        let mut stream = Self::new_input_stream();
+
+        stream.write_bytes(input);
+
+        stream.close()
+    }
 }
 
 impl SHA3_384 {
-    pub fn new_input_stream() -> HashInputStream {
+    pub fn new_input_stream() -> SHA3_384InputStream {
         HashInputStream::new(
             &KeccakParameter::SHA3_384,
             (KeccakParameter::SHA3_384.min_length / 8) as usize,
             false
         )
     }
+
+    pub fn digest(input: &[u8]) -> HashOutputStream {
+        let mut stream = Self::new_input_stream();
+
+        stream.write_bytes(input);
+
+        stream.close()
+    }
 }
 
 impl SHA3_512 {
-    pub fn new_input_stream() -> HashInputStream {
+    pub fn new_input_stream() -> SHA3_512InputStream {
         HashInputStream::new(
             &KeccakParameter::SHA3_512,
             (KeccakParameter::SHA3_512.min_length / 8) as usize,
             false
         )
     }
+
+    pub fn digest(input: &[u8]) -> HashOutputStream {
+        let mut stream = Self::new_input_stream();
+
+        stream.write_bytes(input);
+
+        stream.close()
+    }
 }
 
 impl RAWSHAKE_128 {
-    pub fn new_input_stream() -> HashInputStream {
+    pub fn new_input_stream() -> RAWSHAKE_128InputStream {
         HashInputStream::new(
             &KeccakParameter::RAWSHAKE_128,
             0usize,
             false
         )
     }
+
+    pub fn digest(input: &[u8]) -> HashOutputStream {
+        let mut stream = Self::new_input_stream();
+
+        stream.write_bytes(input);
+
+        stream.close()
+    }
 }
 
 impl RAWSHAKE_256 {
-    pub fn new_input_stream() -> HashInputStream {
+    pub fn new_input_stream() -> RAWSHAKE_256InputStream {
         HashInputStream::new(
             &KeccakParameter::RAWSHAKE_256,
             0usize,
             false
         )
     }
+
+    pub fn digest(input: &[u8]) -> HashOutputStream {
+        let mut stream = Self::new_input_stream();
+
+        stream.write_bytes(input);
+
+        stream.close()
+    }
 }
 
 impl SHAKE_128 {
-    pub fn new_input_stream() -> HashInputStream {
+    pub fn new_input_stream() -> SHAKE_128InputStream {
         HashInputStream::new(
             &KeccakParameter::SHAKE_128,
             0usize,
             false
         )
     }
+
+    pub fn digest(input: &[u8]) -> HashOutputStream {
+        let mut stream = Self::new_input_stream();
+
+        stream.write_bytes(input);
+
+        stream.close()
+    }
 }
 
 impl SHAKE_256 {
-    pub fn new_input_stream() -> HashInputStream {
+    pub fn new_input_stream() -> SHAKE_256InputStream {
         HashInputStream::new(
             &KeccakParameter::SHAKE_256,
             0usize,
             false
         )
+    }
+
+    pub fn digest(input: &[u8]) -> HashOutputStream {
+        let mut stream = Self::new_input_stream();
+
+        stream.write_bytes(input);
+
+        stream.close()
     }
 }
 
@@ -334,7 +404,7 @@ fn write_cshake_pre_padding(stream: &mut HashInputStream, function_name: &[u8], 
 }
 
 impl CSHAKE_128 {
-    pub fn new_input_stream(function_name: &[u8], customization: &[u8]) -> HashInputStream {
+    pub fn new_input_stream(function_name: &[u8], customization: &[u8]) -> CSHAKE_128InputStream {
         let parameter = if function_name.len() + customization.len() != 0 {
             KeccakParameter::CSHAKE_128
         } else {
@@ -352,10 +422,18 @@ impl CSHAKE_128 {
 
         stream
     }
+
+    pub fn digest(function_name: &[u8], customization: &[u8], input: &[u8]) -> HashOutputStream {
+        let mut stream = Self::new_input_stream(function_name, customization);
+
+        stream.write_bytes(input);
+
+        stream.close()
+    }
 }
 
 impl CSHAKE_256 {
-    pub fn new_input_stream(function_name: &[u8], customization: &[u8]) -> HashInputStream {
+    pub fn new_input_stream(function_name: &[u8], customization: &[u8]) -> CSHAKE_256InputStream {
         let parameter = if function_name.len() + customization.len() != 0 {
             KeccakParameter::CSHAKE_256
         } else {
@@ -372,6 +450,14 @@ impl CSHAKE_256 {
         }
 
         stream
+    }
+
+    pub fn digest(function_name: &[u8], customization: &[u8], input: &[u8]) -> HashOutputStream {
+        let mut stream = Self::new_input_stream(function_name, customization);
+
+        stream.write_bytes(input);
+
+        stream.close()
     }
 }
 
@@ -419,7 +505,7 @@ fn write_kmac_pre_padding(stream: &mut HashInputStream, key: &[u8], customizatio
 }
 
 impl KMAC_128 {
-    pub fn new_input_stream(key: &[u8], customization: &[u8], output_length: usize) -> HashInputStream {
+    pub fn new_input_stream(key: &[u8], customization: &[u8], output_length: usize) -> KMAC_128InputStream {
         let mut stream =  HashInputStream::new(
             &KeccakParameter::KMAC_128,
             output_length,
@@ -430,10 +516,18 @@ impl KMAC_128 {
 
         stream
     }
+
+    pub fn digest(key: &[u8], customization: &[u8], output_length: usize, input: &[u8]) -> HashOutputStream {
+        let mut stream = Self::new_input_stream(key, customization, output_length);
+
+        stream.write_bytes(input);
+
+        stream.close()
+    }
 }
 
 impl KMAC_256 {
-    pub fn new_input_stream(key: &[u8], customization: &[u8], output_length: usize) -> HashInputStream {
+    pub fn new_input_stream(key: &[u8], customization: &[u8], output_length: usize) -> KMAC_256InputStream {
         let mut stream =  HashInputStream::new(
             &KeccakParameter::KMAC_256,
             output_length,
@@ -444,10 +538,18 @@ impl KMAC_256 {
 
         stream
     }
+
+    pub fn digest(key: &[u8], customization: &[u8], output_length: usize, input: &[u8]) -> HashOutputStream {
+        let mut stream = Self::new_input_stream(key, customization, output_length);
+
+        stream.write_bytes(input);
+
+        stream.close()
+    }
 }
 
 impl KMACXOF_128 {
-    pub fn new_input_stream(key: &[u8], customization: &[u8]) -> HashInputStream {
+    pub fn new_input_stream(key: &[u8], customization: &[u8]) -> KMACXOF_128InputStream {
         let mut stream =  HashInputStream::new(
             &KeccakParameter::KMACXOF_128,
             0usize,
@@ -458,10 +560,18 @@ impl KMACXOF_128 {
 
         stream
     }
+
+    pub fn digest(key: &[u8], customization: &[u8], input: &[u8]) -> HashOutputStream {
+        let mut stream = Self::new_input_stream(key, customization);
+
+        stream.write_bytes(input);
+
+        stream.close()
+    }
 }
 
 impl KMACXOF_256 {
-    pub fn new_input_stream(key: &[u8], customization: &[u8]) -> HashInputStream {
+    pub fn new_input_stream(key: &[u8], customization: &[u8]) -> KMACXOF_256InputStream {
         let mut stream =  HashInputStream::new(
             &KeccakParameter::KMACXOF_256,
             0usize,
@@ -471,6 +581,14 @@ impl KMACXOF_256 {
         write_kmac_pre_padding(&mut stream, key, customization);
 
         stream
+    }
+
+    pub fn digest(key: &[u8], customization: &[u8], input: &[u8]) -> HashOutputStream {
+        let mut stream = Self::new_input_stream(key, customization);
+
+        stream.write_bytes(input);
+
+        stream.close()
     }
 }
 
