@@ -34,6 +34,7 @@ rust {
     features {
         feature("default", "standalone")
         feature("standalone")
+        feature("ffi")
         feature("executable", "dep:hex")
     }
 

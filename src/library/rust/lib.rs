@@ -27,6 +27,9 @@ pub use crate::streams::HashInputStream;
 pub use crate::streams::HashOutputStream;
 
 mod constants;
+#[cfg(feature = "ffi")]
+pub mod keccakmath;
+#[cfg(not(feature = "ffi"))]
 mod keccakmath;
 mod streams;
 
@@ -577,7 +580,7 @@ impl KMACXOF_256 {
     }
 }
 
-#[cfg(all(not(debug_assertions), not(feature = "executable")))]
+#[cfg(all(not(debug_assertions), not(feature = "executable"), not(feature = "ffi")))]
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
     loop {}

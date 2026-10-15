@@ -171,10 +171,11 @@ panic = "abort"
 [features]
 default = ["standalone"]
 standalone = []
+ffi = []
 executable = ["dep:hex"]
 
 [dependencies]
-zeroize = { version = "1.8.2" }
+zeroize = { version = "1.8.2", default-features = false }
 hex = { version = "0.4.3", optional = true }
 
 [dev-dependencies]
@@ -184,6 +185,7 @@ criterion = { version = "0.8.2" }
 [lib]
 name = "keccakrust"
 path = "../src/library/rust/lib.rs"
+crate-type = ["dylib", "rlib"]
 
 [[bin]]
 name = "keccakrust"
