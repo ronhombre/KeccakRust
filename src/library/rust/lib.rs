@@ -580,7 +580,7 @@ impl KMACXOF_256 {
     }
 }
 
-#[cfg(all(not(debug_assertions), not(feature = "executable"), not(feature = "ffi")))]
+#[cfg(all(not(debug_assertions), not(feature = "executable")))]
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
     loop {}
