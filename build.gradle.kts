@@ -1,7 +1,7 @@
 import asia.hombre.neorust.option.PanicFlag
 
 plugins {
-    id("asia.hombre.neorust") version "0.6.1"
+    id("asia.hombre.neorust")
 }
 
 group = "asia.hombre.keccak"
