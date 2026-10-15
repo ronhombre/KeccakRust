@@ -27,7 +27,6 @@ rust {
     edition = "2024"
 
     library {
-        crateType.add("dylib")
         crateType.add("rlib") //We are adding this to avoid double linking when running our binary executables
     }
 
