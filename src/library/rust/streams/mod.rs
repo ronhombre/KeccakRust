@@ -15,10 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+use crate::constants::OUTPUT_STREAM_LIMIT_ERROR;
+use crate::{KeccakParameter, keccakmath};
 use core::cmp::min;
 use zeroize::Zeroize;
-use crate::constants::OUTPUT_STREAM_LIMIT_ERROR;
-use crate::{keccakmath, KeccakParameter};
 
 /// Represents a generic streaming input mechanism for hashing using the Keccak algorithm.
 ///
@@ -53,18 +53,22 @@ pub struct HashInputStream {
     input_buffer: [u8; 200],
     input_pos: usize,
     incomplete_state: [u64; 25],
-    add_right_encode_at_close: bool //KMAC specific property
+    add_right_encode_at_close: bool, //KMAC specific property
 }
 
 impl HashInputStream {
-    pub(crate) fn new(parameter: &KeccakParameter, max_output_length: usize, add_right_encode_at_close: bool) -> Self {
+    pub(crate) fn new(
+        parameter: &KeccakParameter,
+        max_output_length: usize,
+        add_right_encode_at_close: bool,
+    ) -> Self {
         HashInputStream {
             parameter: parameter.clone(),
             max_output_length,
             input_buffer: [0u8; 200],
             input_pos: 0,
             incomplete_state: [0u64; 25],
-            add_right_encode_at_close
+            add_right_encode_at_close,
         }
     }
 
@@ -88,7 +92,7 @@ impl HashInputStream {
                 self.incomplete_state[i] ^= input_state[transposed_i];
             }
         }
-        
+
         input_state.zeroize();
 
         keccakmath::permute(&mut self.incomplete_state);
@@ -102,10 +106,12 @@ impl HashInputStream {
         let end_index = offset as usize + length;
 
         while input_index < end_index {
-            let bytes_to_digest = min(end_index - input_index, self.parameter.byterate() as usize - self.input_pos);
+            let bytes_to_digest = min(
+                end_index - input_index,
+                self.parameter.byterate() as usize - self.input_pos,
+            );
 
-            self
-                .input_buffer[self.input_pos..(self.input_pos + bytes_to_digest)]
+            self.input_buffer[self.input_pos..(self.input_pos + bytes_to_digest)]
                 .copy_from_slice(&bytes[input_index..(input_index + bytes_to_digest)]);
 
             self.input_pos += bytes_to_digest;
@@ -126,7 +132,7 @@ impl HashInputStream {
     /// byterate threshold of the loaded parameter.
     pub fn write_byte(&mut self, byte: u8) -> &mut Self {
         self.on_absorb_one(&byte);
-        
+
         self
     }
 
@@ -136,7 +142,7 @@ impl HashInputStream {
     /// This doesn't zero fill the input array.
     pub fn write_bytes(&mut self, bytes: &[u8]) -> &mut Self {
         self.on_absorb(bytes, 0, bytes.len());
-        
+
         self
     }
 
@@ -154,12 +160,12 @@ impl HashInputStream {
             let size = keccakmath::right_encode(&mut buffer, self.max_output_length as u64 * 8);
             self.write_bytes(&buffer[0..size]);
         }
-        
+
         keccakmath::pad10n1(
             &mut self.input_buffer[0..self.parameter.byterate() as usize],
             self.input_pos,
             self.parameter.padding_bytes[0],
-            self.parameter.padding_bitcount
+            self.parameter.padding_bitcount,
         );
 
         self.force_permute();
@@ -170,7 +176,7 @@ impl HashInputStream {
             internal_state: self.incomplete_state,
             internal_buffer: keccakmath::state_to_output_copy(self.incomplete_state),
             total_output_length: 0usize,
-            used: 0usize
+            used: 0usize,
         }
     }
 }
@@ -205,7 +211,7 @@ pub struct HashOutputStream {
     internal_state: [u64; 25],
     internal_buffer: [u8; 200],
     total_output_length: usize,
-    used: usize
+    used: usize,
 }
 
 impl HashOutputStream {
@@ -218,29 +224,30 @@ impl HashOutputStream {
     pub fn is_squeezable(&self) -> bool {
         !matches!(
             self.parameter,
-            KeccakParameter::SHA3_224 |
-            KeccakParameter::SHA3_256 |
-            KeccakParameter::SHA3_384 |
-            KeccakParameter::SHA3_512 |
-            KeccakParameter::KMAC_128 |
-            KeccakParameter::KMAC_256
+            KeccakParameter::SHA3_224
+                | KeccakParameter::SHA3_256
+                | KeccakParameter::SHA3_384
+                | KeccakParameter::SHA3_512
+                | KeccakParameter::KMAC_128
+                | KeccakParameter::KMAC_256
         )
     }
 
     /// Returns true if there are more bytes permitted to be outputted.
     pub fn has_next(&self) -> bool {
-        self.is_squeezable() && self.max_output_length == 0 || self.total_output_length < self.max_output_length
+        self.is_squeezable() && self.max_output_length == 0
+            || self.total_output_length < self.max_output_length
     }
 
-    fn try_squeeze(&mut self)  {
+    fn try_squeeze(&mut self) {
         if self.used < self.parameter.byterate() as usize {
             return;
         }
 
         keccakmath::permute(&mut self.internal_state);
-        
+
         let mut output_buffer = keccakmath::state_to_output_copy(self.internal_state);
-        
+
         self.internal_buffer = output_buffer; //This does a memory copy in Rust
 
         output_buffer.zeroize(); //Zero-fill the buffer since we don't need it
@@ -254,9 +261,13 @@ impl HashOutputStream {
         }
         self.try_squeeze();
 
-        let as_much = min(self.parameter.byterate() as usize - self.used, destination.len() - offset);
+        let as_much = min(
+            self.parameter.byterate() as usize - self.used,
+            destination.len() - offset,
+        );
 
-        destination[offset..(offset + as_much)].copy_from_slice(&self.internal_buffer[self.used..(self.used + as_much)]);
+        destination[offset..(offset + as_much)]
+            .copy_from_slice(&self.internal_buffer[self.used..(self.used + as_much)]);
         self.used += as_much;
         self.total_output_length += as_much;
 
@@ -279,14 +290,16 @@ impl HashOutputStream {
     /// Fills the destination array with u8's or fails gracefully by returning `Some(&str)` with the
     /// error message.
     pub fn next_bytes(&mut self, destination_array: &mut [u8]) -> Option<&str> {
-        if !self.is_squeezable() && self.total_output_length + destination_array.len() > self.max_output_length {
+        if !self.is_squeezable()
+            && self.total_output_length + destination_array.len() > self.max_output_length
+        {
             return Some(OUTPUT_STREAM_LIMIT_ERROR);
         }
         let mut offset = 0usize;
         while offset < destination_array.len() {
             match self.get_as_many_bytes(destination_array, offset) {
                 Some(new_offset) => offset = new_offset,
-                _ => return Some(OUTPUT_STREAM_LIMIT_ERROR)
+                _ => return Some(OUTPUT_STREAM_LIMIT_ERROR),
             }
         }
 

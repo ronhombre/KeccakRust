@@ -1,12 +1,11 @@
-import asia.hombre.neorust.option.BuildProfile
-import asia.hombre.neorust.task.CargoBuild
+import asia.hombre.neorust.option.PanicFlag
 
 plugins {
-    id("asia.hombre.neorust") version "0.5.4"
+    id("asia.hombre.neorust") version "0.6.0"
 }
 
 group = "asia.hombre.keccak"
-version = "0.0.6"
+version = "0.0.7"
 
 repositories {
     mavenCentral()
@@ -18,48 +17,50 @@ dependencies {
         optional = true
     }
     devCrate("hex:0.4.3")
+    devCrate("criterion:0.8.2")
 }
 
 rust {
-    manifest {
-        packaging {
-            name = "keccakrust"
-            authors.add("Ron Lauren Hombre <ronlauren@hombre.asia>")
-            edition = "2024"
-        }
-        lib {
-            crateType.add("dylib")
-            crateType.add("rlib") //We are adding this to avoid double linking when running our binary executables
-        }
+    authors.add("Ron Lauren Hombre <ronlauren@hombre.asia>")
+    edition = "2024"
+
+    library {
+        crateType.add("dylib")
+        crateType.add("rlib") //We are adding this to avoid double linking when running our binary executables
     }
 
     features {
-        feature("default", listOf("standalone"))
+        feature("default", "standalone")
         feature("standalone")
-        feature("executable", listOf("dep:hex"))
+        feature("executable", "dep:hex")
     }
 
     profiles {
-        dev.put("panic", "abort")
-        release.put("panic", "abort")
+        val dev by getting {
+            panic = PanicFlag.abort
+        }
+        val release by getting {
+            panic = PanicFlag.abort
+        }
     }
 
     binaries {
-        register("test") {
-            //This prints the stacktrace during panic
-            environment.put("RUST_BACKTRACE", "full")
-            arguments.addAll(listOf("--features", "executable"))
-        }
-        register("test") {
-            buildProfile = BuildProfile.RELEASE
+        val main by getting {
+            noDefaultFeatures = true
+            buildFeatures.add("executable")
         }
     }
-}
 
-//Configure it afterEvaluate since that's when the tasks are added
-afterEvaluate {
-    tasks.findByName("buildTest")!!.apply { this as CargoBuild
-        features.set("executable")
-        noDefaultFeatures = true
+    tests {
+        val main by getting {
+            environment.put("RUST_BACKTRACE", "full")
+            buildFeatures.add("executable")
+        }
+    }
+
+    benchmarks {
+        val standard by getting {
+            buildFeatures.add("executable")
+        }
     }
 }

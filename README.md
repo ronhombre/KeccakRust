@@ -1,4 +1,4 @@
-# KeccakRust (0.0.6)
+# KeccakRust (0.0.7)
 
 A Rust port of [KeccakKotlin](https://github.com/ronhombre/KeccakKotlin) utilizing
 [neo-rust-gradle-plugin](https://github.com/ronhombre/neo-rust-gradle-plugin). This is a proof of concept project for
@@ -153,9 +153,14 @@ This is a copy of the generated `Cargo.toml` by my plugin given the current `bui
 # CHANGES HERE WILL BE LOST!!!
 [package]
 name = "keccakrust"
-version = "0.0.6"
+version = "0.0.7"
 authors = ["Ron Lauren Hombre <ronlauren@hombre.asia>"]
 edition = "2024"
+autolib = false
+autobins = false
+autoexamples = false
+autotests = false
+autobenches = false
 
 [profile.dev]
 panic = "abort"
@@ -174,14 +179,23 @@ hex = { version = "0.4.3", optional = true }
 
 [dev-dependencies]
 hex = { version = "0.4.3" }
+criterion = { version = "0.8.2" }
 
 [lib]
-path = "../src/main/rust/lib.rs"
-crate-type = ["dylib", "rlib"]
+name = "keccakrust"
+path = "../src/library/rust/lib.rs"
 
 [[bin]]
-name = "test"
+name = "keccakrust"
 path = "../src/main/rust/main.rs"
+
+[[test]]
+name = "keccakrust"
+path = "../src/test/rust/main.rs"
+
+[[bench]]
+name = "standard"
+path = "../src/bench/rust/standard.rs"
 
 ```
 
